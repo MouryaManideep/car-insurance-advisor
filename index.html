@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Car Insurance Advisor Chatbot</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #eef3f8;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      /* Floating Chat Icon - Top Right */
+      .chat-icon {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #0077cc;
+        color: white;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+      }
+
+      /* Chat Container (Hidden Initially) */
+      .chat-container {
+        position: fixed;
+        top: 80px;
+        right: -350px; /* Initially hidden (off-screen) */
+        width: 350px;
+        max-height: 550px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        transition: right 0.3s ease-in-out;
+        z-index: 1000;
+      }
+
+      /* Chat Header */
+      .chat-header {
+        background: #0077cc;
+        color: white;
+        padding: 16px;
+        text-align: center;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .chat-header .close-btn {
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 22px;
+        cursor: pointer;
+      }
+
+      /* Knowledge Panel */
+      .knowledge-panel {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        padding: 10px;
+        background-color: #f9f9f9;
+        border-bottom: 1px solid #ddd;
+      }
+
+      .knowledge-panel button {
+        padding: 8px 12px;
+        border: none;
+        border-radius: 8px;
+        background-color: #d8ecff;
+        color: #003366;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background 0.3s;
+      }
+
+      .knowledge-panel button:hover {
+        background-color: #b6d9ff;
+      }
+
+      /* Chat Box */
+      .chat-box {
+        flex: 1;
+        padding: 16px;
+        overflow-y: auto;
+      }
+
+      .message {
+        margin-bottom: 12px;
+        padding: 12px;
+        border-radius: 10px;
+        max-width: 80%;
+        word-wrap: break-word;
+      }
+
+      .user {
+        background: #d0f0ff;
+        align-self: flex-end;
+        text-align: right;
+      }
+
+      .bot {
+        background: #f0f0f0;
+        align-self: flex-start;
+        text-align: left;
+      }
+
+      /* Chat Input Area */
+      .chat-input-area {
+        display: flex;
+        border-top: 1px solid #ddd;
+      }
+
+      input[type="text"] {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        font-size: 16px;
+      }
+
+      button#send-btn {
+        padding: 12px 20px;
+        border: none;
+        background: #0077cc;
+        color: white;
+        cursor: pointer;
+      }
+
+      button#send-btn:hover {
+        background: #005fa3;
+      }
+
+      /* Mobile Responsive */
+      @media (max-width: 600px) {
+        .chat-icon {
+          width: 50px;
+          height: 50px;
+          font-size: 24px;
+        }
+
+        .chat-container {
+          width: 100%;
+          right: 0; /* Full-width chat panel on mobile */
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 🔹 Floating Chat Icon -->
+    <div class="chat-icon" id="chat-icon">💬</div>
+
+    <!-- 🗨️ Chat Container (Initially Hidden) -->
+    <div class="chat-container" id="chat-container">
+      <div class="chat-header">
+        <div>🚗 Car Insurance Advisor</div>
+        <button class="close-btn" id="close-btn">❌</button>
+      </div>
+
+      <!-- 🔹 Knowledge Panel -->
+      <div class="knowledge-panel">
+        <button
+          onclick="sendQuickTopic('What are the different car insurance policy types?')"
+        >
+          Policy Types
+        </button>
+        <button onclick="sendQuickTopic('What are add-ons in car insurance?')">
+          Add-ons
+        </button>
+        <button
+          onclick="sendQuickTopic('How does the car insurance claim process work?')"
+        >
+          How Claims Work
+        </button>
+        <button
+          onclick="sendQuickTopic('What affects my car insurance premium?')"
+        >
+          Premium Factors
+        </button>
+        <button onclick="sendQuickTopic('How to renew car insurance?')">
+          Renew Policy
+        </button>
+      </div>
+
+      <!-- 💬 Chat messages -->
+      <div class="chat-box" id="chat-box"></div>
+
+      <!-- ✍️ Input area -->
+      <div class="chat-input-area">
+        <input
+          type="text"
+          id="input-box"
+          placeholder="Ask me anything about car insurance..."
+        />
+        <button id="send-btn">Send</button>
+      </div>
+    </div>
+
+    <script>
+      const chatBox = document.getElementById("chat-box");
+      const inputBox = document.getElementById("input-box");
+      const sendBtn = document.getElementById("send-btn");
+      const chatContainer = document.getElementById("chat-container");
+      const chatIcon = document.getElementById("chat-icon");
+      const closeBtn = document.getElementById("close-btn");
+
+      function appendMessage(text, sender) {
+        const msg = document.createElement("div");
+        msg.className = `message ${sender}`;
+        msg.textContent = text;
+        chatBox.appendChild(msg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+
+      function sendMessage(message) {
+        if (!message) return;
+
+        appendMessage(message, "user");
+
+        fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.response) {
+              appendMessage(data.response, "bot");
+            } else {
+              appendMessage("Sorry, something went wrong.", "bot");
+            }
+          })
+          .catch((error) => {
+            appendMessage("Error: " + error.message, "bot");
+          });
+      }
+
+      sendBtn.addEventListener("click", () => {
+        const userMessage = inputBox.value.trim();
+        if (!userMessage) return;
+        inputBox.value = "";
+        sendMessage(userMessage);
+      });
+
+      inputBox.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          const userMessage = inputBox.value.trim();
+          if (!userMessage) return;
+          inputBox.value = "";
+          sendMessage(userMessage);
+        }
+      });
+
+      // 🔹 Quick Topic Button Handler
+      function sendQuickTopic(message) {
+        sendMessage(message);
+      }
+
+      // Open the chat container when clicking the icon
+      chatIcon.addEventListener("click", () => {
+        if (chatContainer.style.right === "0px") {
+          chatContainer.style.right = "-350px";
+        } else {
+          chatContainer.style.right = "0";
+        }
+      });
+
+      // Close the chat container when clicking the close button
+      closeBtn.addEventListener("click", () => {
+        chatContainer.style.right = "-350px";
+      });
+    </script>
+  </body>
+</html>
